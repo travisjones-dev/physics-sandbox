@@ -9,6 +9,7 @@ struct Body {
     Vec2 position;
     float radius = 0.5f;
     // Stage 1: add the state the integrator needs (velocity, mass or inverse mass, ...).
+    Vec2 velocity{0.0f, 0.0f};
 };
 
 class World {
