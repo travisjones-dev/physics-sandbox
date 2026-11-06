@@ -28,6 +28,7 @@ void EmptyWorldSteps() {
 void FreeFallVelocity() {
     World worldForTesting;
     Body b;
+    b.position.y = 100.0f;
     worldForTesting.bodies.push_back(b);
 
     for (int i = 0; i < 60; i++) {
