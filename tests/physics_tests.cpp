@@ -25,6 +25,18 @@ void EmptyWorldSteps() {
     CHECK(world.bodies.empty());
 }
 
+void FreeFallVelocity() {
+    World worldForTesting;
+    Body b;
+    worldForTesting.bodies.push_back(b);
+
+    for (int i = 0; i < 60; i++) {
+        worldForTesting.step(1.0f / 60.0f);
+    }
+
+    CHECK(Near(worldForTesting.bodies[0].velocity.y, -9.81f));
+}
+
 // Add tests as you build each stage. Good ones assert physics laws, e.g.
 //   - a body in free fall for t seconds has velocity g*t
 //   - total momentum is the same before and after two balls collide
@@ -35,6 +47,7 @@ void EmptyWorldSteps() {
 int main() {
     struct { const char* name; void (*fn)(); } tests[] = {
         {"EmptyWorldSteps", EmptyWorldSteps},
+        {"FreeFallVelocity", FreeFallVelocity},
     };
     for (const auto& t : tests) {
         const int before = g_failures;
