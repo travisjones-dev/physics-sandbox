@@ -38,6 +38,24 @@ void FreeFallVelocity() {
     CHECK(Near(worldForTesting.bodies[0].velocity.y, -9.81f));
 }
 
+void BallLandsOnFloor() {
+    World world;
+    Body ball;
+    ball.position.y = 10.0f;
+    world.bodies.push_back(ball);
+
+
+    // Remember, the real body lives inside the bodies vector. Ball or b or whatever
+    // we call the body here inside this test is a copy.
+    for (int i = 0; i < 600; i++) {
+        world.step(1.0f / 60.0f);
+        CHECK(world.bodies[0].position.y >= world.bodies[0].radius);
+    }
+
+    CHECK(Near(world.bodies[0].position.y, world.bodies[0].radius, 0.01f));
+
+}
+
 // Add tests as you build each stage. Good ones assert physics laws, e.g.
 //   - a body in free fall for t seconds has velocity g*t
 //   - total momentum is the same before and after two balls collide
@@ -49,6 +67,7 @@ int main() {
     struct { const char* name; void (*fn)(); } tests[] = {
         {"EmptyWorldSteps", EmptyWorldSteps},
         {"FreeFallVelocity", FreeFallVelocity},
+        {"BallLandsOnFloor", BallLandsOnFloor},
     };
     for (const auto& t : tests) {
         const int before = g_failures;
