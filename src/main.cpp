@@ -34,7 +34,7 @@ void ResetScene(World& world) {
     world.bodies.clear();
     for (int i = 0; i < 5; ++i) {
         Body b;
-        b.position = {-4.0f + 2.0f * i, 8.0f + i};
+        b.position = {0.3f * i, 2.0f + 1.5f * i};
         world.bodies.push_back(b);
     }
 }

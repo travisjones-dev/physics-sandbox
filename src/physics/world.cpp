@@ -1,11 +1,16 @@
 #include "physics/world.h"
 #include <cmath>
+#include <algorithm>
 
 void World::step(float dt) {
     
     // Your engine starts here. See README.md for the stages.
 
+
+    // This loop creates gravity and creates the bounce + settle for the 2D engine.
     for (Body& b : bodies) {    // range based loop "for each body b in bodies"
+        // Gravity implemented using semi-implicit euler (velocity first)
+        // This prevents energy from drifting (which will cause crashes and "blow ups")
         b.velocity = b.velocity + gravity*dt;
         b.position = b.position + b.velocity*dt;
 
@@ -15,4 +20,44 @@ void World::step(float dt) {
             b.velocity.y = b.restitution * std::fabs(b.velocity.y);
         }
     }
+
+
+    // Quick note here: You always want the starting point
+    // and your condition to have the same type. .size() returns type size_t
+    for (size_t i = 0; i < bodies.size(); i++) {
+        for (size_t j = i + 1; j < bodies.size(); j++) {
+            Body& a = bodies[i];
+            Body& b = bodies[j];
+            
+            // the actual distance
+            float distance = Length(a.position - b.position);
+
+
+            if (distance < a.radius + b.radius) {
+                float overlap = (a.radius + b.radius) - distance; 
+                Vec2 normal = (b.position - a.position) * (1.0f / distance); 
+
+                // push the objects apart.
+                a.position = a.position - normal*(overlap / 2);
+                b.position = b.position + normal*(overlap / 2);
+
+                // Relative velocity
+                Vec2 relVelocity = b.velocity - a.velocity;
+                float closingSpeed = Dot(relVelocity, normal);
+
+                if (closingSpeed < 0) {
+                    float minRestitution = std::min(a.restitution, b.restitution);
+                    float impulse = -(1 + minRestitution) * (closingSpeed / 2);
+
+                    
+                    b.velocity = b.velocity + normal * impulse;
+                    a.velocity = a.velocity - normal * impulse;
+                  
+                }
+            }
+
+        }
+    }
+
+
 }
