@@ -33,13 +33,13 @@ void World::step(float dt) {
             float distance = Length(a.position - b.position);
 
 
-            if (distance < a.radius + b.radius) {
+            if (distance > 0.0001f && distance < a.radius + b.radius) {
                 float overlap = (a.radius + b.radius) - distance; 
                 Vec2 normal = (b.position - a.position) * (1.0f / distance); 
 
                 // push the objects apart.
-                a.position = a.position - normal*(overlap / 2);
-                b.position = b.position + normal*(overlap / 2);
+                a.position = a.position - normal*(overlap / a.mass);
+                b.position = b.position + normal*(overlap / b.mass);
 
                 // Relative velocity
                 Vec2 relVelocity = b.velocity - a.velocity;
@@ -47,11 +47,11 @@ void World::step(float dt) {
 
                 if (closingSpeed < 0) {
                     float minRestitution = std::min(a.restitution, b.restitution);
-                    float impulse = -(1 + minRestitution) * (closingSpeed / 2);
+                    float impulse = -(1 + minRestitution) * (closingSpeed / (1 / a.mass + 1 / b.mass));
 
                     
-                    b.velocity = b.velocity + normal * impulse;
-                    a.velocity = a.velocity - normal * impulse;
+                    b.velocity = b.velocity + normal * (impulse / b.mass);
+                    a.velocity = a.velocity - normal * (impulse / a.mass);
                   
                 }
             }

@@ -56,6 +56,42 @@ void BallLandsOnFloor() {
 
 }
 
+// This test is to confirm momentum is conserved.
+void CollisionConservesMomentum() {
+    World world;
+    world.gravity = {0.0f, 0.0f};
+
+    Body ball1;
+    Body ball2;
+
+    ball1.mass = 1.0f;
+    ball1.position = {-2.0f, 5.0f};
+    ball1.velocity = {3.0f, 0.0f};
+
+    ball2.mass = 3.0f;
+    ball2.position = {2.0f, 5.0f};
+    ball2.velocity = {0.0f, 0.0f};
+
+    world.bodies.push_back(ball1);
+    world.bodies.push_back(ball2);
+
+    float momentumBefore = world.bodies[0].mass * world.bodies[0].velocity.x + 
+    world.bodies[1].mass * world.bodies[1].velocity.x;
+
+    for (int i = 0; i < 200; i++) {
+        world.step(1.0f / 60.0f);
+
+        float momentumAfter = world.bodies[0].mass * world.bodies[0].velocity.x + 
+        world.bodies[1].mass * world.bodies[1].velocity.x;
+
+        CHECK(Near(momentumAfter, momentumBefore));
+
+    }
+
+    CHECK(world.bodies[1].velocity.x > 0);
+
+}
+
 // Add tests as you build each stage. Good ones assert physics laws, e.g.
 //   - a body in free fall for t seconds has velocity g*t
 //   - total momentum is the same before and after two balls collide
@@ -68,6 +104,7 @@ int main() {
         {"EmptyWorldSteps", EmptyWorldSteps},
         {"FreeFallVelocity", FreeFallVelocity},
         {"BallLandsOnFloor", BallLandsOnFloor},
+        {"CollisionConservesMomentum", CollisionConservesMomentum},
     };
     for (const auto& t : tests) {
         const int before = g_failures;

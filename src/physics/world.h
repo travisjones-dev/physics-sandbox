@@ -16,6 +16,10 @@ struct Body {
     // meaning the basketball bounces back after 
     // hitting the ground at 80% of its velocity upon impact.
     float restitution = 0.8f;
+
+    // Implementing mass field for varying mass. unit is kg.
+    float mass = 1.0f;
+    
 };
 
 class World {
