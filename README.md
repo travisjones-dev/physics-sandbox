@@ -37,3 +37,11 @@ World units are meters, seconds, and kilograms, with +y up. The ground line is y
 - Erin Catto, GDC physics talks (box2d.org/publications)
 - Christer Ericson, *Real-Time Collision Detection*
 - Ian Millington, *Game Physics Engine Development*
+
+## Benchmarks
+
+| Balls | Brute force (ms) | Grid solution (ms) |
+|---|---|---|
+| 1,000 | 0.5 | |
+| 3,000 | 4.37 | |
+| 5,000 | 12.09 | |

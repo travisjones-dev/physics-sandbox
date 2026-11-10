@@ -47,6 +47,9 @@ void World::step(float dt) {
 
                 if (closingSpeed < 0) {
                     float minRestitution = std::min(a.restitution, b.restitution);
+                    // Impulse is an instant change in momentum. Instead of simulating collision forces over time, 
+                    // I compute the kick needed to reverse the closing velocity, scaled by restitution, 
+                    // and apply it equally and oppositely to both bodies, divided by each one's mass.
                     float impulse = -(1 + minRestitution) * (closingSpeed / (1 / a.mass + 1 / b.mass));
 
                     

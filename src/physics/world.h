@@ -19,7 +19,7 @@ struct Body {
 
     // Implementing mass field for varying mass. unit is kg.
     float mass = 1.0f;
-    
+
 };
 
 class World {
