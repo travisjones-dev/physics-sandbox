@@ -13,6 +13,8 @@ constexpr float kGroundPixels = 60.0f;    // world y = 0 sits this far above the
 constexpr float kFixedDt = 1.0f / 60.0f;  // physics always steps 60 times per simulated second
 constexpr float kMaxFrameTime = 0.25f;    // after a hitch, drop time instead of spiraling
 constexpr int kBallCount = 1000;
+constexpr double kHudRefreshSeconds = 0.25;  // update HUD numbers 4x/s; every frame is too fast to read
+constexpr float kHudFontSize = 20.0f;
 
 // World space (meters, +y up, origin on the ground line at center) to screen pixels.
 Vector2 ToScreen(Vec2 p) {
@@ -37,7 +39,7 @@ void ResetScene(World& world) {
         Body b;
         int col = i % 50;
         int row = i / 50;
-        b.position = {-10.0f + 0.4f * col, 2.0f + 0.4f * row};
+        b.position = {-12.8f + 0.1f * i, 0.4f * i};
         b.radius = 0.1f;
         world.bodies.push_back(b);
     }
@@ -55,12 +57,33 @@ int main(int argc, char** argv) {
     const int refresh = GetMonitorRefreshRate(GetCurrentMonitor());
     SetTargetFPS(refresh > 0 ? refresh : 60);  // the vsync hint isn't honored everywhere
 
+    // raylib's built-in font is a 10px bitmap that blurs when scaled up. A TTF
+    // rasterized at the display's DPI stays sharp. Falls back to the built-in font.
+    const char* kHudFontPath = "C:/Windows/Fonts/consola.ttf";
+    Font hudFont = GetFontDefault();
+    const bool customFont = FileExists(kHudFontPath);
+    if (customFont) {
+        const int pixelSize = static_cast<int>(kHudFontSize * GetWindowScaleDPI().x);
+        hudFont = LoadFontEx(kHudFontPath, pixelSize, nullptr, 0);
+        SetTextureFilter(hudFont.texture, TEXTURE_FILTER_BILINEAR);
+    }
+
     World world;
+    world.rightWall = (kScreenWidth / 2) / kPixelsPerMeter;
+    world.leftWall = -(kScreenWidth / 2) / kPixelsPerMeter;
     ResetScene(world);
 
     bool paused = false;
     float accumulator = 0.0f;
-    double physicsMs = 0.0;
+
+    // HUD stats are accumulated over kHudRefreshSeconds, then shown as averages.
+    double physicsMsTotal = 0.0;
+    int stepsInWindow = 0;
+    double windowStart = GetTime();
+    double shownMsPerStep = 0.0;
+    int shownStepsPerSecond = 0;
+    int shownFps = 0;
+
     while (!WindowShouldClose()) {
         if (IsKeyPressed(KEY_SPACE)) paused = !paused;
         if (IsKeyPressed(KEY_R)) ResetScene(world);
@@ -80,18 +103,34 @@ int main(int argc, char** argv) {
             }
         } else if (IsKeyPressed(KEY_PERIOD)) {
             world.step(kFixedDt);  // single-step while paused, handy for debugging collisions
+            ++steps;
         }
-        if (steps > 0) {physicsMs = (GetTime() - t0) * 1000.0;}
+
+        physicsMsTotal += (GetTime() - t0) * 1000.0;
+        stepsInWindow += steps;
+        const double now = GetTime();
+        if (now - windowStart >= kHudRefreshSeconds) {
+            shownMsPerStep = stepsInWindow > 0 ? physicsMsTotal / stepsInWindow : 0.0;
+            shownStepsPerSecond = static_cast<int>(stepsInWindow / (now - windowStart) + 0.5);
+            shownFps = GetFPS();
+            physicsMsTotal = 0.0;
+            stepsInWindow = 0;
+            windowStart = now;
+        }
+
         BeginDrawing();
         ClearBackground({24, 26, 32, 255});
         DrawLineEx(ToScreen({-20.0f, 0.0f}), ToScreen({20.0f, 0.0f}), 2.0f, GRAY);
         for (const Body& b : world.bodies) {
             DrawCircleV(ToScreen(b.position), b.radius * kPixelsPerMeter, {120, 180, 255, 255});
         }
-        DrawText(TextFormat("bodies: %d   steps this frame: %d   FPS: %d Physics Time: %.2f ms",
-                            static_cast<int>(world.bodies.size()), steps, GetFPS(), physicsMs),
-                 12, 12, 20, RAYWHITE);
-        DrawText("SPACE pause   . step (paused)   R reset   F12 screenshot", 12, 38, 18, GRAY);
+        DrawTextEx(hudFont,
+                   TextFormat("bodies: %d   physics: %.2f ms/step   steps/s: %d   FPS: %d",
+                              static_cast<int>(world.bodies.size()), shownMsPerStep,
+                              shownStepsPerSecond, shownFps),
+                   {12, 12}, kHudFontSize, 1.0f, RAYWHITE);
+        DrawTextEx(hudFont, "SPACE pause   . step (paused)   R reset   F12 screenshot",
+                   {12, 38}, kHudFontSize - 2.0f, 1.0f, GRAY);
         EndDrawing();
 
         if (IsKeyPressed(KEY_F12)) SaveScreenshot("screenshot.png");
@@ -101,6 +140,7 @@ int main(int argc, char** argv) {
         }
     }
 
+    if (customFont) UnloadFont(hudFont);
     CloseWindow();
     return 0;
 }

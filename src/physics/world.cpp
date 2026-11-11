@@ -15,9 +15,23 @@ void World::step(float dt) {
         b.position = b.position + b.velocity*dt;
 
         // never use == on floats
+        // Essentially creates floor and bounce effect upon colliding with floor
         if (b.position.y < b.radius) {
             b.position.y = b.radius;
             b.velocity.y = b.restitution * std::fabs(b.velocity.y);
+        }
+
+        // Creates boundary for positive position wall
+        if (b.position.x >= rightWall - b.radius) {
+            b.position.x = rightWall - b.radius;
+            b.velocity.x = -b.restitution * std::fabs(b.velocity.x); // remember fabs makes the velocity always positive
+                                                                    // do we want a positive velocity here?
+        }
+
+        // Creates boundary for negative position wall
+        if (b.position.x <= leftWall + b.radius) {
+            b.position.x = leftWall + b.radius;
+            b.velocity.x = b.restitution * std::fabs(b.velocity.x);
         }
     }
 

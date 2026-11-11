@@ -30,4 +30,7 @@ public:
 
     std::vector<Body> bodies;
     Vec2 gravity{0.0f, -9.81f};
+
+    float leftWall = -1000.0f;
+    float rightWall = 1000.0f;
 };
